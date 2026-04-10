@@ -17,3 +17,10 @@ export function getRedisConnection() {
 
   return redisConnection;
 }
+
+export async function pingRedis() {
+  const redis = getRedisConnection();
+  const response = await redis.ping();
+
+  return response === "PONG";
+}

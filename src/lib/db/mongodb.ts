@@ -35,3 +35,10 @@ export async function connectToDatabase() {
 
   return globalMongoose.mongooseConnection;
 }
+
+export async function pingDatabase() {
+  const connection = await connectToDatabase();
+  const result = await connection.connection.db?.admin().ping();
+
+  return result?.ok === 1;
+}
