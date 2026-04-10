@@ -10,20 +10,45 @@ import { CreateGenerationJobInput } from "@/src/modules/generation/generation.sc
 export async function createGenerationJob(input: CreateGenerationJobInput) {
   await connectToDatabase();
 
-  const book = await BookModel.create({
-    title: input.title,
-    premise: input.premise,
-    genre: input.genre,
-    status: "queued",
-    settings: {
-      tone: input.tone,
-      targetWords: input.targetWords,
-      model: input.model,
-    },
-  });
+  let bookId: string;
+  let book;
+
+  if ("bookId" in input) {
+    const existingBook = await BookModel.findByIdAndUpdate(
+      input.bookId,
+      {
+        $set: {
+          status: "queued",
+        },
+      },
+      {
+        new: true,
+      },
+    );
+
+    if (!existingBook) {
+      throw new Error("Book not found.");
+    }
+
+    book = existingBook;
+    bookId = existingBook.id;
+  } else {
+    book = await BookModel.create({
+      title: input.title,
+      premise: input.premise,
+      genre: input.genre,
+      status: "queued",
+      settings: {
+        tone: input.tone,
+        targetWords: input.targetWords,
+        model: input.model,
+      },
+    });
+    bookId = book.id;
+  }
 
   const generationJob = await GenerationJobModel.create({
-    bookId: book._id,
+    bookId,
     status: "queued",
     currentStep: "queued",
     logs: ["Job created and waiting in queue."],
@@ -40,7 +65,7 @@ export async function createGenerationJob(input: CreateGenerationJobInput) {
   });
 
   const queuePayload: GenerationJobData = {
-    bookId: book._id.toString(),
+    bookId,
     jobId: generationJob._id.toString(),
   };
 
@@ -60,6 +85,15 @@ export async function listGenerationJobs() {
     .sort({ createdAt: -1 })
     .limit(20)
     .populate("bookId")
+    .lean();
+}
+
+export async function listGenerationJobsByBookId(bookId: string) {
+  await connectToDatabase();
+
+  return GenerationJobModel.find({ bookId })
+    .sort({ createdAt: -1 })
+    .limit(20)
     .lean();
 }
 

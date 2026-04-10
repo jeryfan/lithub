@@ -43,6 +43,8 @@ pnpm dev
 pnpm dev:worker
 ```
 
+开发环境详细说明见 [docs/development.md](/Users/fanjunjie/Documents/repositories/personal/lithub/docs/development.md)。
+
 ## API
 
 - `GET /api/health`

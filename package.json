@@ -5,10 +5,12 @@
   "packageManager": "pnpm@9.5.0",
   "scripts": {
     "dev": "next dev",
-    "dev:worker": "tsx watch src/workers/index.ts",
+    "dev:worker": "node --env-file=.env --import tsx src/workers/index.ts",
+    "dev:infra": "docker compose -f docker/docker-compose.yaml up -d mongo redis",
+    "dev:infra:down": "docker compose -f docker/docker-compose.yaml stop mongo redis",
     "build": "next build --webpack",
     "start": "next start",
-    "start:worker": "tsx src/workers/index.ts",
+    "start:worker": "node --env-file=.env --import tsx src/workers/index.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },

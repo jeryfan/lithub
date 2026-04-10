@@ -14,6 +14,8 @@ const bookSchema = new Schema(
       tone: { type: String, default: "cinematic" },
       targetWords: { type: Number, default: 50000 },
       model: { type: String, default: "mock-llm" },
+      audience: { type: String, default: "general" },
+      pointOfView: { type: String, default: "third-person" },
     },
     latestVersion: { type: Number, default: 1 },
   },
