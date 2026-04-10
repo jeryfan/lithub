@@ -12,17 +12,18 @@ export async function createBook(input: CreateBookInput) {
   await connectToDatabase();
 
   const settings = {
-    tone: input.settings?.tone ?? "cinematic",
-    targetWords: input.settings?.targetWords ?? 50000,
-    model: input.settings?.model ?? "mock-llm",
-    audience: input.settings?.audience ?? "general",
-    pointOfView: input.settings?.pointOfView ?? "third-person",
+    tone: "cinematic",
+    targetWords: 50000,
+    model: "mock-llm",
+    audience: "general",
+    pointOfView: "third-person",
   };
 
   return BookModel.create({
     title: input.title,
-    premise: input.premise,
-    genre: input.genre,
+    coverImage: input.coverImage || null,
+    premise: "",
+    genre: "",
     settings,
   });
 }
@@ -54,6 +55,10 @@ export async function updateBook(bookId: string, input: UpdateBookInput) {
 
   if (input.title !== undefined) {
     update.title = input.title;
+  }
+
+  if (input.coverImage !== undefined) {
+    update.coverImage = input.coverImage || null;
   }
 
   if (input.premise !== undefined) {

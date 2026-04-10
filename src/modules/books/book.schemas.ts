@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+const coverImageSchema = z
+  .string()
+  .refine(
+    (value) =>
+      value.length === 0 ||
+      value.startsWith("data:image/") ||
+      /^https?:\/\//.test(value),
+    "Cover image must be an image data URL or http(s) URL.",
+  );
+
 export const bookStatusSchema = z.enum([
   "draft",
   "queued",
@@ -18,13 +28,12 @@ export const bookSettingsSchema = z.object({
 
 export const createBookSchema = z.object({
   title: z.string().min(1),
-  premise: z.string().min(1),
-  genre: z.string().min(1),
-  settings: bookSettingsSchema.optional(),
+  coverImage: coverImageSchema.optional(),
 });
 
 export const updateBookSchema = z.object({
   title: z.string().min(1).optional(),
+  coverImage: coverImageSchema.optional(),
   premise: z.string().min(1).optional(),
   genre: z.string().min(1).optional(),
   status: bookStatusSchema.optional(),

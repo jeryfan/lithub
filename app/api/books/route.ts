@@ -12,7 +12,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const input = createBookSchema.parse(await request.json());
+    const formData = await request.formData();
+    const title = formData.get("title");
+    const cover = formData.get("cover");
+    const coverImage = await toDataUrl(cover);
+
+    const input = createBookSchema.parse({
+      title: typeof title === "string" ? title : "",
+      coverImage,
+    });
     const book = await createBook(input);
 
     return NextResponse.json(
@@ -37,4 +45,23 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: "Failed to create book." }, { status: 500 });
   }
+}
+
+async function toDataUrl(value: FormDataEntryValue | null) {
+  if (!(value instanceof File) || value.size === 0) {
+    return "";
+  }
+
+  if (!value.type.startsWith("image/")) {
+    throw new ZodError([
+      {
+        code: "custom",
+        path: ["cover"],
+        message: "Cover must be an image file.",
+      },
+    ]);
+  }
+
+  const bytes = Buffer.from(await value.arrayBuffer());
+  return `data:${value.type};base64,${bytes.toString("base64")}`;
 }

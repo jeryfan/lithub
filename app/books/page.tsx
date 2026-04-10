@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { listBooks } from "@/src/modules/books/book.service";
+import { BookCreateDialog } from "@/src/modules/books/components/book-create-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -19,35 +20,15 @@ export default async function BooksPage() {
           </span>
         </div>
 
-        <Link
-          href="/books/new"
-          className="inline-flex h-10 items-center justify-center rounded-full bg-stone-950 px-5 text-sm font-medium text-white transition hover:bg-stone-800"
-        >
-          新建书籍
-        </Link>
+        <BookCreateDialog />
       </section>
 
       {books.length === 0 ? (
-        <section className="flex min-h-[68vh] items-center justify-center rounded-[2rem] border border-dashed border-stone-900/15 bg-[linear-gradient(145deg,rgba(255,252,246,0.96),rgba(244,238,229,0.9))] p-10 text-center shadow-[0_24px_80px_rgba(120,53,15,0.08)]">
-          <div className="max-w-md">
-            <div className="mx-auto flex h-20 w-16 items-center justify-center rounded-[1.2rem] border border-stone-900/10 bg-[linear-gradient(180deg,#f2e4ca_0%,#d4af77_100%)] text-sm font-semibold tracking-[0.22em] text-stone-800 uppercase shadow-[0_18px_40px_rgba(120,53,15,0.12)]">
-              Book
-            </div>
-            <h1 className="mt-5 text-2xl font-semibold tracking-tight text-stone-950">
-              书架还是空的
-            </h1>
-            <p className="mt-3 text-sm leading-7 text-stone-600">
-              创建第一本书后，这里会以封面卡片的形式展示项目，后续可以直接接入 AI 生成封面和版本状态。
-            </p>
-            <div className="mt-6">
-              <Link
-                href="/books/new"
-                className="inline-flex h-11 items-center justify-center rounded-full bg-stone-950 px-6 text-sm font-medium text-white transition hover:bg-stone-800"
-              >
-                创建第一本书
-              </Link>
-            </div>
-          </div>
+        <section className="flex min-h-[68vh] items-center justify-center rounded-[2rem] border border-dashed border-stone-900/15 bg-[linear-gradient(145deg,rgba(255,252,246,0.96),rgba(244,238,229,0.9))] p-10 shadow-[0_24px_80px_rgba(120,53,15,0.08)]">
+          <BookCreateDialog
+            buttonLabel="创建第一本书"
+            buttonClassName="inline-flex h-11 items-center justify-center rounded-full bg-stone-950 px-6 text-sm font-medium text-white transition hover:bg-stone-800"
+          />
         </section>
       ) : (
         <section className="grid gap-6 [grid-template-columns:repeat(auto-fill,minmax(220px,260px))]">
@@ -65,10 +46,19 @@ export default async function BooksPage() {
                     className={`relative aspect-[3/4] overflow-hidden ${coverStyle.cover}`}
                     aria-label={`${book.title} 封面`}
                   >
-                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent_30%,rgba(15,10,6,0.12))]" />
-                    <div className="absolute inset-y-0 left-5 w-px bg-black/7" />
-                    <div className="absolute left-4 top-4 h-14 w-14 rounded-full bg-white/12 blur-2xl" />
-                    <div className="absolute bottom-4 right-4 h-20 w-20 rounded-full bg-black/10 blur-3xl" />
+                    {book.coverImage ? (
+                      <div
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                        style={{ backgroundImage: `url("${book.coverImage}")` }}
+                      />
+                    ) : (
+                      <>
+                        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent_30%,rgba(15,10,6,0.12))]" />
+                        <div className="absolute inset-y-0 left-5 w-px bg-black/7" />
+                        <div className="absolute left-4 top-4 h-14 w-14 rounded-full bg-white/12 blur-2xl" />
+                        <div className="absolute bottom-4 right-4 h-20 w-20 rounded-full bg-black/10 blur-3xl" />
+                      </>
+                    )}
 
                     <div className="absolute inset-x-0 bottom-0 translate-y-full bg-[linear-gradient(180deg,rgba(24,24,27,0),rgba(24,24,27,0.9)_22%,rgba(24,24,27,0.96)_100%)] px-5 pb-5 pt-10 text-white transition duration-300 group-hover:translate-y-0">
                       <div className="truncate text-base font-medium tracking-tight">

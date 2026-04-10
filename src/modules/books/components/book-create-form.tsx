@@ -1,77 +1,85 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 
 type FormState = {
   title: string;
-  premise: string;
-  genre: string;
-  tone: string;
-  targetWords: string;
-  audience: string;
-  pointOfView: string;
+  coverFile: File | null;
 };
 
 const initialState: FormState = {
   title: "",
-  premise: "",
-  genre: "",
-  tone: "cinematic",
-  targetWords: "50000",
-  audience: "general",
-  pointOfView: "third-person",
+  coverFile: null,
 };
 
-export function BookCreateForm() {
+export function BookCreateForm({
+  className,
+}: {
+  className?: string;
+}) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
+    const payload = new FormData();
+    payload.append("title", form.title);
+
+    if (form.coverFile) {
+      payload.append("cover", form.coverFile);
+    }
+
     const response = await fetch("/api/books", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title: form.title,
-        premise: form.premise,
-        genre: form.genre,
-        settings: {
-          tone: form.tone,
-          targetWords: Number(form.targetWords),
-          audience: form.audience,
-          pointOfView: form.pointOfView,
-        },
-      }),
+      body: payload,
     });
 
-    const payload = (await response.json()) as {
+    const result = (await response.json()) as {
       book?: { _id: string };
       message?: string;
     };
 
     setIsSubmitting(false);
 
-    if (!response.ok || !payload.book?._id) {
-      setError(payload.message ?? "创建书籍失败。");
+    if (!response.ok || !result.book?._id) {
+      setError(result.message ?? "创建书籍失败。");
       return;
     }
 
-    router.push(`/books/${payload.book._id}`);
+    router.push(`/books/${result.book._id}`);
     router.refresh();
+  }
+
+  function handleCoverChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setForm((current) => ({ ...current, coverFile: file }));
+
+    if (!file) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPreviewUrl(typeof reader.result === "string" ? reader.result : null);
+    };
+    reader.readAsDataURL(file);
   }
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-[2rem] border border-stone-900/10 bg-white/80 p-8 shadow-[0_20px_80px_rgba(120,53,15,0.08)]"
+      className={
+        className ??
+        "rounded-[2rem] border border-stone-900/10 bg-white/80 p-8 shadow-[0_20px_80px_rgba(120,53,15,0.08)]"
+      }
     >
       <div className="grid gap-6">
         <Field label="书名">
@@ -80,70 +88,51 @@ export function BookCreateForm() {
             value={form.title}
             onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
             className="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-stone-900/30"
+            placeholder="输入书籍名称"
           />
         </Field>
 
-        <Field label="题材">
-          <input
-            required
-            value={form.genre}
-            onChange={(event) => setForm((current) => ({ ...current, genre: event.target.value }))}
-            className="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-stone-900/30"
-          />
-        </Field>
+        <Field label="封面（选填）">
+          <label className="block cursor-pointer">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/avif"
+              onChange={handleCoverChange}
+              className="sr-only"
+            />
 
-        <Field label="核心 premise">
-          <textarea
-            required
-            rows={5}
-            value={form.premise}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, premise: event.target.value }))
-            }
-            className="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-stone-900/30"
-          />
-        </Field>
+            <div className="w-[220px] overflow-hidden rounded-[1.25rem] border border-stone-900/10 bg-stone-50 transition hover:border-stone-900/20">
+              {previewUrl ? (
+                <div
+                  className="aspect-[3/4] w-full bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url("${previewUrl}")` }}
+                />
+              ) : (
+                <div className="flex aspect-[3/4] items-center justify-center border border-dashed border-stone-900/15 px-6 py-8 text-center transition hover:bg-stone-100/80">
+                  <div className="grid gap-2">
+                    <span className="text-sm font-medium text-stone-800">选择本地封面文件</span>
+                    <span className="text-xs text-stone-500">支持 PNG、JPG、WEBP、AVIF</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </label>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Field label="风格">
-            <input
-              value={form.tone}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, tone: event.target.value }))
-              }
-              className="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-stone-900/30"
-            />
-          </Field>
-          <Field label="目标字数">
-            <input
-              type="number"
-              min="1000"
-              value={form.targetWords}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, targetWords: event.target.value }))
-              }
-              className="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-stone-900/30"
-            />
-          </Field>
-          <Field label="目标受众">
-            <input
-              value={form.audience}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, audience: event.target.value }))
-              }
-              className="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-stone-900/30"
-            />
-          </Field>
-          <Field label="叙事视角">
-            <input
-              value={form.pointOfView}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, pointOfView: event.target.value }))
-              }
-              className="w-full rounded-2xl border border-stone-900/10 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-stone-900/30"
-            />
-          </Field>
-        </div>
+          <div className="h-5">
+            {previewUrl ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setForm((current) => ({ ...current, coverFile: null }));
+                  setPreviewUrl(null);
+                }}
+                className="text-xs font-medium text-stone-500 transition hover:text-stone-900"
+              >
+                移除封面
+              </button>
+            ) : null}
+          </div>
+        </Field>
       </div>
 
       {error ? <p className="mt-6 text-sm text-red-600">{error}</p> : null}

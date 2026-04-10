@@ -3,8 +3,9 @@ import { InferSchemaType, Model, Schema, model, models } from "mongoose";
 const bookSchema = new Schema(
   {
     title: { type: String, required: true, trim: true },
-    premise: { type: String, required: true, trim: true },
-    genre: { type: String, required: true, trim: true },
+    coverImage: { type: String, trim: true, default: null },
+    premise: { type: String, trim: true, default: "" },
+    genre: { type: String, trim: true, default: "" },
     status: {
       type: String,
       enum: ["draft", "queued", "generating", "completed", "failed"],
